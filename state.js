@@ -50,12 +50,11 @@ range(N).forEach(i => range(N).forEach(j => {
 function update () {
   step = (step + 1) % 1
   grow()
-  // die()
-  if(step === 0) spread()
+  if (step === 0) spread()
   setColors()
 }
 
-function spread() {
+function spread () {
   nodes.forEach(node => {
     nodes.forEach(node => {
       node.color2 = node.color
@@ -64,7 +63,7 @@ function spread() {
     })
   })
   nodes.forEach(node => {
-    if(node.color === 'blue') {
+    if (node.color === 'blue') {
       node.color2 = 'green'
       node.life2 = 0
       neighbors[node.id].forEach(neighbor => {
@@ -73,10 +72,10 @@ function spread() {
     }
   })
   nodes.forEach(node => {
-    if(node.color === 'green') {
+    if (node.color === 'green') {
       neighbors[node.id].forEach(neighbor => {
-        if(neighbor.color === 'blue') {
-          if(neighbor.target === node.life * node.capacity) {
+        if (neighbor.color === 'blue') {
+          if (neighbor.target === node.life * node.capacity) {
             node.color2 = 'blue'
           }
         }
@@ -108,15 +107,6 @@ function grow () {
   })
 }
 
-function die () {
-  nodes.forEach(node => {
-    if (node.color !== 'green') {
-      node.life = clamp(0, 1, node.life - dt * 0.1)
-      node.color = node.life > 0 ? node.color : 'green'
-    }
-  })
-}
-
 function diffuse () {
   nodes.forEach(node => {
     node.capacity2 = node.capacity
@@ -138,20 +128,20 @@ function diffuse () {
 
 function setColors () {
   nodes.forEach(node => {
-    if(node.color === 'green') {
+    if (node.color === 'green') {
       node.r = 0
       node.g = node.life * 0.5
       node.b = 0
     }
-    if(node.color === 'blue') {
+    if (node.color === 'blue') {
       node.r = 0
-      node.g = 0 
-      node.b = 0.8  
+      node.g = 0
+      node.b = 0.8
     }
-    if(node.color === 'red') {
+    if (node.color === 'red') {
       node.r = 1
-      node.g = 0 
-      node.b = 0  
+      node.g = 0
+      node.b = 0
     }
   })
 }
