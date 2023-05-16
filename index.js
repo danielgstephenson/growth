@@ -1,15 +1,34 @@
 import server from './server.js'
 import state from './state.js'
 
-const updateInterval = 0.1
-const N = 50
-let time = 0
-const { grid, nodes, neighbors } = state.create()
+const dt = state.dt
+const updateInterval = dt
+const N = state.N
+const nodes = state.nodes
 
 const io = server.start(() => {
   console.log('Server started')
+  setInterval(update, updateInterval * 1000)
+})
+
+io.on('connection', socket => {
+  console.log('connection:', socket.id)
+  const id = socket.id
+  const msg = { N, id, nodes }
+  socket.emit('connected', msg)
 })
 
 function update () {
-  time = time + updateInterval
+  state.update()
+  updateClients()
+}
+
+function updateClients () {
+  const nodeStates = nodes.map(node => ({
+    r: node.r,
+    g: node.g,
+    b: node.b
+  }))
+  const msg = { nodeStates }
+  io.emit('updateClients', msg)
 }

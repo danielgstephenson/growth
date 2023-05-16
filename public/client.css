@@ -1,0 +1,32 @@
+* { margin: 0; padding: 0; box-sizing: border-box; text-align: center;}
+body { 
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; 
+  align-items: center;
+  cursor: url('cursor.png'), pointer;
+}
+canvas { 
+  margin-top: 0vmin;
+  border: 1px solid hsl(180, 10%, 10%);
+}
+#mainDiv {
+  display: flex;
+  justify-content: center;
+}
+#leftDiv {
+  width: 100%;
+  color: hsl(0, 0%, 100%);
+  margin-top: 20vh;
+  font-size: 10vw;
+  display: none;
+}
+#rightDiv {
+  width: 100%;
+  color: hsl(0, 0%, 100%);
+  margin-top: 20vh;
+  font-size: 10vw;
+  display: none;
+}
