@@ -1,10 +1,8 @@
 import server from './server.js'
 import state from './state.js'
 
-const dt = state.dt
-const updateInterval = dt
+const updateInterval = 0.1
 const N = state.N
-const nodes = state.nodes
 
 const io = server.start(() => {
   console.log('Server started')
@@ -14,6 +12,13 @@ const io = server.start(() => {
 io.on('connection', socket => {
   console.log('connection:', socket.id)
   const id = socket.id
+  const nodes = state.nodes.map(node => ({
+    r: node.r,
+    g: node.g,
+    b: node.b,
+    x: node.x,
+    y: node.y
+  }))
   const msg = { N, id, nodes }
   socket.emit('connected', msg)
 })
@@ -24,11 +29,11 @@ function update () {
 }
 
 function updateClients () {
-  const nodeStates = nodes.map(node => ({
+  const nodes = state.nodes.map(node => ({
     r: node.r,
     g: node.g,
     b: node.b
   }))
-  const msg = { nodeStates }
+  const msg = { nodes }
   io.emit('updateClients', msg)
 }

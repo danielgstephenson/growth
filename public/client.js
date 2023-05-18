@@ -19,6 +19,7 @@ let N = 10
 let nodes = []
 let canvas0 = new OffscreenCanvas(N, N)
 let context0 = canvas0.getContext('2d')
+let msgLog = {}
 context0.imageSmoothingEnabled = false
 
 socket.on('connected', msg => {
@@ -34,10 +35,11 @@ socket.on('connected', msg => {
 })
 
 socket.on('updateClients', msg => {
-  msg.nodeStates.forEach((nodeState, i) => {
-    nodes[i].r = nodeState.r
-    nodes[i].g = nodeState.g
-    nodes[i].b = nodeState.b
+  msgLog = msg
+  msg.nodes.forEach((node, i) => {
+    nodes[i].r = node.r
+    nodes[i].g = node.g
+    nodes[i].b = node.b
   })
 })
 
@@ -78,3 +80,7 @@ function draw () {
 }
 
 draw()
+
+document.onmousedown = function (event) {
+  console.log(msgLog)
+}
