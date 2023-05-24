@@ -1,15 +1,15 @@
-import { range, clamp, sum } from './utility.js'
+import { clamp, range } from './utility.js'
 
 const N = 50
-const dt = 1
+const dt = 0.1
+const C = 0.5
+const year = 3
+let t = 0
 
 const grid = range(N).map(i => range(N).map(j => ({
-  align: 0,
-  life: 0,
-  capacity: 0,
+  r: 0,
   g: 0,
   b: 0,
-  r: 0,
   x: j,
   y: i,
   neighbors: [],
@@ -20,102 +20,80 @@ const nodes = grid.flat()
 nodes.forEach((node, index) => {
   node.id = index
 })
+const edges = []
 
 range(N).forEach(i => range(N).forEach(j => {
   const node = grid[i][j]
   const L = N - 1
-  function setupNeighbor (a, b) {
-    const neighbor = grid[a][b]
+  function setupNeighbor (x, y, w) {
+    const neighbor = grid[x][y]
     node.neighbors.push(neighbor)
+    edges.push({ from: node, to: neighbor, w })
   }
-  if (i < L) setupNeighbor(i + 1, j)
-  if (i > 0) setupNeighbor(i - 1, j)
-  if (j < L) setupNeighbor(i, j + 1)
-  if (j > 0) setupNeighbor(i, j - 1)
+  if (i < L) setupNeighbor(i + 1, j, 1)
+  if (i > 0) setupNeighbor(i - 1, j, 1)
+  if (j < L) setupNeighbor(i, j + 1, 1)
+  if (j > 0) setupNeighbor(i, j - 1, 1)
+  if (i < L && j < L) setupNeighbor(i + 1, j + 1, Math.SQRT1_2)
+  if (i < L && j > 0) setupNeighbor(i + 1, j - 1, Math.SQRT1_2)
+  if (i > 0 && j < L) setupNeighbor(i - 1, j + 1, Math.SQRT1_2)
+  if (i > 0 && j > 0) setupNeighbor(i - 1, j - 1, Math.SQRT1_2)
 }))
 
 function update () {
-  grow()
+  t += dt
   spread()
-  setColors()
+  grow()
 }
 
 function spread () {
-  nodes.forEach(node => {
-    node.align2 = node.align
+  edges.forEach(edge => {
+    edge.g = 1 * edge.w * edge.from.g
+    edge.b = 0.01 * edge.w * edge.from.b
+    edge.r = 0.2 * edge.w * edge.from.r
   })
-  nodes.forEach(node => {
-    if (Math.abs(node.align) === 1) {
-      node.neighbors.forEach(neighbor => {
-        if (neighbor.align * node.align >= 0) {
-          neighbor.align2 += dt * 0.2 * Math.sign(node.align)
-        }
-      })
+  edges.forEach(edge => {
+    const fromRed = edge.from.r > C && edge.from.b < C
+    const fromBlue = edge.from.b > C && edge.from.r < C
+    const toRed = edge.to.r > C && edge.to.r < C
+    const toBlue = edge.to.b > C && edge.to.b < C
+    const redBlockGreen = fromRed && !toRed
+    const blueBlockGreen = fromBlue && !toBlue
+    const greenBlocked = redBlockGreen || blueBlockGreen
+    if (!greenBlocked) {
+      edge.from.g -= dt * edge.g
+      edge.to.g += dt * edge.g
     }
-  })
-  nodes.forEach(node => {
-    node.align = node.align2
+    // edge.from.b -= dt * edge.b
+    // edge.to.b += dt * edge.b
+    if (edge.from.r > C) {
+      // edge.from.r -= dt * edge.r
+      edge.to.r += dt * edge.r * edge.g
+    }
   })
 }
 
 function grow () {
+  // const season = 0.5 * Math.sin(t * 2 * Math.PI / year) + 0.5
   nodes.forEach(node => {
-    node.life2 = node.life
+    node.dg = 0.1 + 0.2 * node.g - 0.3 * node.r - 0.3 * node.b
+    node.db = 0
+    node.dr = -0.1 * node.r
   })
   nodes.forEach(node => {
-    const neighborLife = node.neighbors.map(neighbor => neighbor.life * neighbor.capacity ** 3)
-    if (node.capacity > 0) {
-      node.life2 += dt * 1 * sum(neighborLife) * (1 - node.life / node.capacity)
-    }
-    node.life2 = clamp(0, node.capacity, node.life2)
-  })
-  nodes.forEach(node => {
-    node.life = node.life2
-  })
-}
-
-function diffuse () {
-  nodes.forEach(node => {
-    node.capacity2 = node.capacity
-  })
-  const criticalDifference = 0
-  const diffusionRate = 0.1
-  nodes.forEach(node => {
-    node.neighbors.forEach(neighbor => {
-      const pressure = Math.max(0, node.capacity - neighbor.capacity - criticalDifference)
-      const flow = diffusionRate * dt * pressure
-      neighbor.capacity2 += flow
-      node.capacity2 -= flow
-    })
-  })
-  nodes.forEach(node => {
-    node.capacity = node.capacity2
-  })
-}
-
-function setColors () {
-  nodes.forEach(node => {
-    node.r = (1 - node.life) * node.capacity / 3
-    node.g = (1 - node.life) * node.capacity / 3
-    node.b = (1 - node.life) * node.capacity / 3
-    node.r += node.life * node.capacity * Math.max(0, node.align)
-    node.g += node.life * node.capacity * (1 - Math.abs(node.align))
-    node.b += node.life * node.capacity * Math.max(0, -node.align)
+    node.g += dt * node.dg
+    node.b += dt * node.db
+    node.r += dt * node.dr
+    node.r = clamp(0, 1, node.r)
+    node.g = clamp(0, 1, node.g)
+    node.b = clamp(0, 1, node.b)
   })
 }
 
 nodes.forEach(node => {
-  node.capacity = Math.random() < 0.25 ? 2 * Math.random() : 0
-  node.align = Math.random() < 0.05 ? (2 * Math.random() - 1) : 0
-})
-const aligns = nodes.map(node => node.align)
-console.log(Math.min(...aligns))
-range(20).forEach(i => diffuse())
-nodes.forEach(node => {
-  node.capacity = clamp(0, 1, node.capacity)
-})
-nodes.forEach(node => {
-  node.life = Math.random() < 0.01 ? node.capacity : 0
+  node.r = Math.random() < 0.1 ? 1 : 0
+  node.g = Math.random()
+  node.b = 0
 })
 
 export default { N, dt, nodes, update }
